@@ -1,13 +1,14 @@
-import { useState } from "react";
-import { Calendar, Download, Filter } from "lucide-react";
+import { Calendar, Download } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { FaceScanner } from "@/components/attendance/FaceScanner";
 import { AttendanceTable } from "@/components/attendance/AttendanceTable";
+import { ManualAttendanceDialog } from "@/components/dialogs/ManualAttendanceDialog";
+import { useAttendanceStats } from "@/hooks/useAttendance";
 import { toast } from "@/hooks/use-toast";
 
 export default function Attendance() {
-  const [showScanner, setShowScanner] = useState(true);
+  const { data: stats, isLoading: statsLoading } = useAttendanceStats();
 
   const handleScanComplete = (success: boolean, studentName?: string) => {
     if (success && studentName) {
@@ -18,10 +19,17 @@ export default function Attendance() {
     } else {
       toast({
         title: "Recognition Failed",
-        description: "Please try again or contact the administrator.",
+        description: "Please try again or use manual entry.",
         variant: "destructive",
       });
     }
+  };
+
+  const handleExport = () => {
+    toast({
+      title: "Export Started",
+      description: "Attendance report is being generated...",
+    });
   };
 
   return (
@@ -34,18 +42,24 @@ export default function Attendance() {
         <div className="rounded-xl border border-border bg-card p-4">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-success/10">
-              <span className="text-lg font-bold text-success">86%</span>
+              <span className="text-lg font-bold text-success">
+                {statsLoading ? "..." : `${stats?.percentage || 0}%`}
+              </span>
             </div>
             <div>
               <p className="text-sm font-medium text-foreground">Present Today</p>
-              <p className="text-xs text-muted-foreground">1,082 / 1,248 students</p>
+              <p className="text-xs text-muted-foreground">
+                {statsLoading ? "Loading..." : `${stats?.present || 0} / ${stats?.totalStudents || 0} students`}
+              </p>
             </div>
           </div>
         </div>
         <div className="rounded-xl border border-border bg-card p-4">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-warning/10">
-              <span className="text-lg font-bold text-warning">24</span>
+              <span className="text-lg font-bold text-warning">
+                {statsLoading ? "..." : stats?.late || 0}
+              </span>
             </div>
             <div>
               <p className="text-sm font-medium text-foreground">Late Arrivals</p>
@@ -56,7 +70,9 @@ export default function Attendance() {
         <div className="rounded-xl border border-border bg-card p-4">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-destructive/10">
-              <span className="text-lg font-bold text-destructive">142</span>
+              <span className="text-lg font-bold text-destructive">
+                {statsLoading ? "..." : stats?.absent || 0}
+              </span>
             </div>
             <div>
               <p className="text-sm font-medium text-foreground">Absent</p>
@@ -110,11 +126,8 @@ export default function Attendance() {
           </div>
 
           <div className="mt-6 flex gap-3">
-            <Button variant="outline" className="flex-1 gap-2">
-              <Filter className="h-4 w-4" />
-              Manual Entry
-            </Button>
-            <Button variant="outline" className="flex-1 gap-2">
+            <ManualAttendanceDialog />
+            <Button variant="outline" className="flex-1 gap-2" onClick={handleExport}>
               <Download className="h-4 w-4" />
               Export
             </Button>

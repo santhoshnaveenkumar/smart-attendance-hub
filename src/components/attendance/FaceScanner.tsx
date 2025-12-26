@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from "react";
 import { Camera, CheckCircle2, XCircle, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useStudents } from "@/hooks/useStudents";
+import { useMarkAttendance } from "@/hooks/useAttendance";
 
 type ScanState = "idle" | "scanning" | "success" | "failed";
 
@@ -14,6 +16,9 @@ export function FaceScanner({ onScanComplete }: FaceScannerProps) {
   const [studentName, setStudentName] = useState<string>("");
   const videoRef = useRef<HTMLVideoElement>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
+
+  const { data: students } = useStudents();
+  const markAttendance = useMarkAttendance();
 
   const startCamera = async () => {
     try {
@@ -36,19 +41,37 @@ export function FaceScanner({ onScanComplete }: FaceScannerProps) {
     }
   };
 
-  const simulateScan = () => {
+  const simulateScan = async () => {
+    if (!students || students.length === 0) {
+      setScanState("failed");
+      onScanComplete?.(false);
+      return;
+    }
+
     setScanState("scanning");
     
     // Simulate face recognition process
-    setTimeout(() => {
-      const success = Math.random() > 0.3; // 70% success rate for demo
-      const names = ["Emma Wilson", "John Smith", "Michael Brown", "Sarah Davis", "James Johnson"];
-      const randomName = names[Math.floor(Math.random() * names.length)];
+    setTimeout(async () => {
+      const success = Math.random() > 0.2; // 80% success rate for demo
       
       if (success) {
-        setStudentName(randomName);
-        setScanState("success");
-        onScanComplete?.(true, randomName);
+        // Pick a random student from the database
+        const randomStudent = students[Math.floor(Math.random() * students.length)];
+        
+        try {
+          await markAttendance.mutateAsync({
+            student_id: randomStudent.id,
+            status: "present",
+            method: "Face Recognition",
+          });
+          
+          setStudentName(randomStudent.name);
+          setScanState("success");
+          onScanComplete?.(true, randomStudent.name);
+        } catch (error) {
+          setScanState("failed");
+          onScanComplete?.(false);
+        }
       } else {
         setScanState("failed");
         onScanComplete?.(false);
@@ -151,7 +174,7 @@ export function FaceScanner({ onScanComplete }: FaceScannerProps) {
                   Face not recognized
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  Please try again or contact administrator
+                  Please try again or use manual entry
                 </p>
               </div>
             )}
