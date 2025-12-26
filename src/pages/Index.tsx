@@ -4,6 +4,9 @@ import { StatCard } from "@/components/dashboard/StatCard";
 import { AttendanceChart } from "@/components/dashboard/AttendanceChart";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { TopStudents } from "@/components/dashboard/TopStudents";
+import { useStudents } from "@/hooks/useStudents";
+import { useActivities } from "@/hooks/useActivities";
+import { useAttendanceStats } from "@/hooks/useAttendance";
 
 const Index = () => {
   const today = new Date().toLocaleDateString("en-US", {
@@ -12,6 +15,15 @@ const Index = () => {
     month: "long",
     day: "numeric",
   });
+
+  const { data: students } = useStudents();
+  const { data: activities } = useActivities();
+  const { data: stats } = useAttendanceStats();
+
+  const totalStudents = students?.length || 0;
+  const activeActivities = activities?.filter(a => a.status === "active").length || 0;
+  const presentToday = stats?.present || 0;
+  const attendancePercentage = stats?.percentage || 0;
 
   return (
     <DashboardLayout
@@ -22,7 +34,7 @@ const Index = () => {
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
         <StatCard
           title="Total Students"
-          value="1,248"
+          value={totalStudents.toString()}
           change="+12%"
           changeType="positive"
           icon={Users}
@@ -30,21 +42,21 @@ const Index = () => {
         />
         <StatCard
           title="Present Today"
-          value="1,082"
-          change="86.7%"
+          value={presentToday.toString()}
+          change={`${attendancePercentage}%`}
           changeType="positive"
           icon={UserCheck}
         />
         <StatCard
           title="Active Activities"
-          value="24"
-          change="3 due today"
+          value={activeActivities.toString()}
+          change={`${activeActivities} ongoing`}
           changeType="neutral"
           icon={BookOpen}
         />
         <StatCard
           title="Avg. Attendance"
-          value="91.2%"
+          value={`${attendancePercentage}%`}
           change="+2.4%"
           changeType="positive"
           icon={TrendingUp}

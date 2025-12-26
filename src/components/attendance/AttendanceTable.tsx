@@ -1,18 +1,40 @@
-import { CheckCircle2, XCircle, Clock } from "lucide-react";
+import { CheckCircle2, XCircle, Clock, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const attendanceData = [
-  { id: 1, name: "Emma Wilson", rollNo: "CS2024001", status: "present", time: "09:05 AM", method: "Face Recognition" },
-  { id: 2, name: "John Smith", rollNo: "CS2024002", status: "present", time: "09:08 AM", method: "Face Recognition" },
-  { id: 3, name: "Michael Brown", rollNo: "CS2024003", status: "present", time: "09:12 AM", method: "Face Recognition" },
-  { id: 4, name: "Sarah Davis", rollNo: "CS2024004", status: "absent", time: "-", method: "-" },
-  { id: 5, name: "James Johnson", rollNo: "CS2024005", status: "present", time: "09:15 AM", method: "Face Recognition" },
-  { id: 6, name: "Emily Chen", rollNo: "CS2024006", status: "late", time: "09:35 AM", method: "Face Recognition" },
-  { id: 7, name: "David Lee", rollNo: "CS2024007", status: "present", time: "09:02 AM", method: "Face Recognition" },
-  { id: 8, name: "Anna Martinez", rollNo: "CS2024008", status: "absent", time: "-", method: "-" },
-];
+import { useAttendance } from "@/hooks/useAttendance";
+import { useStudents } from "@/hooks/useStudents";
 
 export function AttendanceTable() {
+  const { data: attendance, isLoading: attendanceLoading } = useAttendance();
+  const { data: students, isLoading: studentsLoading } = useStudents();
+
+  const isLoading = attendanceLoading || studentsLoading;
+
+  // Combine students with their attendance records
+  const tableData = students?.map((student) => {
+    const record = attendance?.find((a) => a.student_id === student.id);
+    return {
+      id: student.id,
+      name: student.name,
+      rollNo: student.student_id,
+      status: record?.status || "absent",
+      time: record?.time
+        ? new Date(`2000-01-01T${record.time}`).toLocaleTimeString("en-US", {
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+        : "-",
+      method: record?.method || "-",
+    };
+  }) || [];
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="rounded-xl border border-border bg-card overflow-hidden">
       <div className="overflow-x-auto">
@@ -37,7 +59,7 @@ export function AttendanceTable() {
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {attendanceData.map((student, index) => (
+            {tableData.map((student, index) => (
               <tr
                 key={student.id}
                 className="transition-colors hover:bg-muted/20 animate-slide-up"
@@ -80,6 +102,12 @@ export function AttendanceTable() {
           </tbody>
         </table>
       </div>
+      
+      {tableData.length === 0 && (
+        <div className="py-8 text-center text-muted-foreground">
+          No students found. Add students first.
+        </div>
+      )}
     </div>
   );
 }

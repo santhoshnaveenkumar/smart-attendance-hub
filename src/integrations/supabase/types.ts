@@ -14,7 +14,155 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      activities: {
+        Row: {
+          created_at: string
+          description: string | null
+          due_date: string | null
+          id: string
+          max_score: number | null
+          status: string
+          title: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          max_score?: number | null
+          status?: string
+          title: string
+          type: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          max_score?: number | null
+          status?: string
+          title?: string
+          type?: string
+        }
+        Relationships: []
+      }
+      attendance: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          method: string | null
+          status: string
+          student_id: string
+          time: string
+        }
+        Insert: {
+          created_at?: string
+          date?: string
+          id?: string
+          method?: string | null
+          status: string
+          student_id: string
+          time?: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          method?: string | null
+          status?: string
+          student_id?: string
+          time?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_activities: {
+        Row: {
+          activity_id: string
+          created_at: string
+          id: string
+          score: number | null
+          status: string
+          student_id: string
+          submitted_at: string | null
+        }
+        Insert: {
+          activity_id: string
+          created_at?: string
+          id?: string
+          score?: number | null
+          status?: string
+          student_id: string
+          submitted_at?: string | null
+        }
+        Update: {
+          activity_id?: string
+          created_at?: string
+          id?: string
+          score?: number | null
+          status?: string
+          student_id?: string
+          submitted_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_activities_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_activities_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      students: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          department: string
+          email: string | null
+          id: string
+          name: string
+          student_id: string
+          year: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          department: string
+          email?: string | null
+          id?: string
+          name: string
+          student_id: string
+          year: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          department?: string
+          email?: string | null
+          id?: string
+          name?: string
+          student_id?: string
+          year?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
